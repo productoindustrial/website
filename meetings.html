@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Reunión - TuEmpresa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f7fafc;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        nav a:hover {
+            opacity: 0.8;
+        }
+
+        .meeting-container {
+            max-width: 1000px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .meeting-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .meeting-header h1 {
+            font-size: 2.5rem;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .meeting-header p {
+            font-size: 1.1rem;
+            color: #718096;
+        }
+
+        .booking-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .calendar-section {
+            padding-right: 2rem;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-header h3 {
+            color: #2d3748;
+            font-size: 1.3rem;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .calendar-nav button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .calendar-nav button:hover {
+            background: #5568d3;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .calendar-day-name {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: bold;
+            padding: 0.5rem 0;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .calendar-day:hover:not(.disabled):not(.empty) {
+            background: #edf2f7;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .calendar-day.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.empty {
+            border: none;
+            cursor: default;
+        }
+
+        .time-section h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .time-slot {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .time-slot:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .time-slot.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .time-slot.unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        .booking-form {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .selected-info {
+            background: #edf2f7;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+        }
+
+        .selected-info strong {
+            color: #667eea;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .success-message {
+            background: #48bb78;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .booking-section {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-section {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+                padding-right: 0;
+                padding-bottom: 2rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .time-slots {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">TuEmpresa</div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="pricing.html">Precios</a></li>
+                <li><a href="meetings.html">Reuniones</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="meeting-container">
+        <div class="meeting-header">
+            <h1>Agendar una Reunión</h1>
+            <p>Elegí el día y horario que mejor te convenga</p>
+        </div>
+
+        <div class="booking-section">
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <h3 id="currentMonth">Diciembre 2024</h3>
+                    <div class="calendar-nav">
+                        <button id="prevMonth">◀</button>
+                        <button id="nextMonth">▶</button>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendar">
+                    <!-- Calendar will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="time-section">
+                <h3>Horarios Disponibles</h3>
+                <div id="selectedDateInfo" style="color: #718096; margin-bottom: 1rem;">
+                    Seleccioná una fecha en el calendario
+                </div>
+                <div class="time-slots" id="timeSlots">
+                    <!-- Time slots will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="booking-form" id="bookingForm" style="display: none;">
+            <div class="selected-info" id="selectionSummary"></div>
+            
+            <div class="form-group">
+                <label for="name">Nombre completo *</label>
+                <input type="text" id="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Teléfono</label>
+                <input type="tel" id="phone">
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Comentarios o preguntas</label>
+                <textarea id="notes"></textarea>
+            </div>
+
+            <button class="submit-button" id="submitButton">Confirmar Reunión</button>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            <h2>¡Reunión Confirmada! ✓</h2>
+            <p>Te enviamos un email de confirmación con los detalles.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 TuEmpresa. Todos los derechos reservados.</p>
+        <p><a href="#">Términos</a> | <a href="#">Privacidad</a> | <a href="#">Contacto</a></p>
+    </footer>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN DE INTEGRACIÓN
+        // ============================================
+        
+        // Para HubSpot:
+        // 1. Obtené tu Meeting Link de HubSpot
+        // 2. Reemplazá la URL en submitBooking() con tu endpoint
+        // const HUBSPOT_MEETING_URL = 'https://api.hubspot.com/meetings/v1/meetings/book';
+        // const HUBSPOT_API_KEY = 'TU_API_KEY_AQUI';
+
+        // Para Apollo.io:
+        // 1. Configurá tu calendario en Apollo
+        // 2. Usá su API de scheduling
+        // const APOLLO_API_URL = 'https://api.apollo.io/v1/meetings';
+        // const APOLLO_API_KEY = 'TU_API_KEY_AQUI';
+
+        // ============================================
+        // CÓDIGO DEL CALENDARIO
+        // ============================================
+
+        let currentDate = new Date();
+        let selectedDate = null;
+        let selectedTime = null;
+
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                           'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+        // Horarios disponibles (simulados - reemplazar con tu API)
+        const availableTimeSlots = [
+            '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+            '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
+            '16:00', '16:30', '17:00', '17:30'
+        ];
+
+        function generateCalendar() {
+            const calendar = document.getElementById('calendar');
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                `${monthNames[month]} ${year}`;
+
+            calendar.innerHTML = '';
+
+            // Day names
+            dayNames.forEach(day => {
+                const dayName = document.createElement('div');
+                dayName.className = 'calendar-day-name';
+                dayName.textContent = day;
+                calendar.appendChild(dayName);
+            });
+
+            // First day of month
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            // Empty cells
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                calendar.appendChild(emptyDay);
+            }
+
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(year, month, day);
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+
+                // Disable past dates
+                if (dayDate < today.setHours(0, 0, 0, 0)) {
+                    dayElement.classList.add('disabled');
+                } else {
+                    dayElement.onclick = () => selectDate(dayDate);
+                }
+
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            selectedTime = null;
+
+            // Update UI
+            document.querySelectorAll('.calendar-day').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            // Show time slots
+            document.getElementById('selectedDateInfo').textContent = 
+                `Horarios para ${date.toLocaleDateString('es-AR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })}`;
+            
+            generateTimeSlots();
+            document.getElementById('bookingForm').style.display = 'none';
+        }
+
+        function generateTimeSlots() {
+            const slotsContainer = document.getElementById('timeSlots');
+            slotsContainer.innerHTML = '';
+
+            availableTimeSlots.forEach(time => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+                slot.textContent = time;
+                
+                // Simular algunos slots no disponibles (random)
+                if (Math.random() > 0.8) {
+                    slot.classList.add('unavailable');
+                } else {
+                    slot.onclick = () => selectTime(time, slot);
+                }
+
+                slotsContainer.appendChild(slot);
+            });
+        }
+
+        function selectTime(time, element) {
+            selectedTime = time;
+
+            // Update UI
+            document.querySelectorAll('.time-slot').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+
+            // Show booking form
+            const form = document.getElementById('bookingForm');
+            form.style.display = 'block';
+            
+            document.getElementById('selectionSummary').innerHTML = 
+                `<strong>Reunión seleccionada:</strong><br>
+                 ${selectedDate.toLocaleDateString('es-AR', { 
+                     weekday: 'long', 
+                     year: 'numeric', 
+                     month: 'long', 
+                     day: 'numeric' 
+                 })} a las ${selectedTime}`;
+
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Navigation
+        document.getElementById('prevMonth').onclick = () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar();
+        };
+
+        document.getElementById('nextMonth').onclick = () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar();
+        };
+
+        // Submit booking
+        document.getElementById('submitButton').onclick = async () => {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!name || !email) {
+                alert('Por favor completá los campos obligatorios');
+                return;
+            }
+
+            const bookingData = {
+                date: selectedDate.toISOString(),
+                time: selectedTime,
+                name: name,
+                email: email,
+                phone: phone,
+                notes: notes
+            };
+
+            // ============================================
+            // AQUÍ INTEGRAR CON HUBSPOT O APOLLO
+            // ============================================
+            
+            // Ejemplo HubSpot:
+            /*
+            try {
+                const response = await fetch(HUBSPOT_MEETING_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${HUBSPOT_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        startTime: new Date(`${selectedDate.toDateString()} ${selectedTime}`).toISOString(),
+                        endTime: new Date(`${selectedDate.toDateString()} ${selectedTime}`).setMinutes(30),
+                        contact: {
+                            email: email,
+                            firstName: name.split(' ')[0],
+                            lastName: name.split(' ').slice(1).join(' ')
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    showSuccess();
+                }
+            } catch (error) {
+                console.error('Error booking meeting:', error);
+                alert('Hubo un error al agendar la reunión. Por favor intentá de nuevo.');
+            }
+            */
+
+            // Por ahora, simulamos éxito
+            console.log('Booking data:', bookingData);
+            showSuccess();
+        };
+
+        function showSuccess() {
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Reset form
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        }
+
+        // Initialize
+        generateCalendar();
+    </script>
+</body>
+</html>
